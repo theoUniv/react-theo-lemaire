@@ -51,3 +51,36 @@ export const deleteAd = async (req, res) => {
         res.status(500).json({ message: 'Erreur serveur lors de la suppression.' });
     }
 };
+
+
+export const updateAd = async (req, res) => {
+    const adId = req.params.id;
+    const userId = req.userId;
+    const { title, description, category, price } = req.body;
+
+    try {
+        const ad = await Ad.findById(adId).populate('author');
+
+        if (!ad) {
+            return res.status(404).json({ message: 'Annonce introuvable.' });
+        }
+
+        if (!ad.author || !ad.author._id || ad.author._id.toString() === userId) {
+            // Mise à jour
+            ad.title = title || ad.title;
+            ad.description = description || ad.description;
+            ad.category = category || ad.category;
+            ad.price = price || ad.price;
+
+            await ad.save();
+
+            return res.json({ message: 'Annonce mise à jour.', ad });
+        } else {
+            return res.status(403).json({ message: 'Pas autorisé à modifier cette annonce.' });
+        }
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Erreur serveur lors de la modification.' });
+    }
+};
